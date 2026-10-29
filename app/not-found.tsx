@@ -9,8 +9,7 @@ export default function NotFound() {
         Oops! The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
       <Link
-        href="/"
-        className="rounded-lg bg-orange-500 px-6 py-2.5 font-medium text-white transition-colors hover:bg-orange-600"
+        href="/" className="rounded-lg bg-orange-500 px-6 py-2.5 font-medium text-white transition-colors hover:bg-orange-600"
       >
         Go Home
       </Link>

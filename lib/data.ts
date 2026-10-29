@@ -71,15 +71,14 @@ export const services: ServiceProvider[] = [
     avatar: "/avatars/daisy.jpg",
     rating: 4.5,
     reviewCount: 315,
-    location: "2868 Wescam Court, Grand Rapids, NY",
-    city: "New York",
+    location: "Franco, posta",
+    city: "Adama",
     category: "Nanny / Babysitter",
     services: ["Babysitter", "Housekeeper"],
     priceRange: "10 Br/hr • 40 hrs worked • 5 yrs experience",
     experience: "5 yrs",
     hoursWorked: "40 hrs",
-    description:
-      "Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum has been the industry's standard dummy text ever since...",
+    description: "Experienced in active childcare  homework supervision, and deep-clean housekeeping. Punctual, organized, and . Ready to help your household run smoothly!",
     phone: ["+91 759 264 0215", "+91 845 102 7516"],
     availability: [
       { day: "Mon", hours: "9:00 am - 12:30 pm, 4:00 pm - 8:00 pm" },
@@ -100,7 +99,7 @@ export const services: ServiceProvider[] = [
     rating: 4.6,
     reviewCount: 426,
     location: "830 Emily Drive, Margaretta, NY",
-    city: "New York",
+    city: "Addis Abeba ",
     category: "Nanny / Babysitter",
     services: ["Babysitter"],
     priceRange: "15 Br/hr • 35 hrs worked • 3 yrs experience",
@@ -108,7 +107,7 @@ export const services: ServiceProvider[] = [
     hoursWorked: "35 hrs",
     description:
       "Experienced nanny with a passion for child development and early education. CPR certified and background checked.",
-    phone: ["+91 823 445 1120"],
+    phone: ["+251 923 445 112"],
     availability: [
       { day: "Mon", hours: "8:00 am - 5:00 pm" },
       { day: "Tue", hours: "8:00 am - 5:00 pm" },
@@ -337,9 +336,9 @@ export const bookings: Booking[] = [
     providerId: "user-provider-002",
     date: "07 Dec, 2021 at 04:00 pm - 08:00 pm",
     time: "04:00 pm - 08:00 pm",
-    location: "354 Vineyard Drive Cleveland, Georgia - 44115",
+    location: "Sarise Addis Abeba",
     status: "Confirmed",
-    phone: "+91 849 151 5401",
+    phone: "+251 922 345 678",
     price: "60 Birr",
   },
   {

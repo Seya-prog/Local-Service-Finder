@@ -36,6 +36,7 @@ A modern web application that connects local service providers with customers in
    BETTER_AUTH_SECRET=your-secret-key-here
    BETTER_AUTH_URL=http://localhost:3000
    ```
+   
 
 4. **Run the development server:**
    ```bash
@@ -82,4 +83,4 @@ local-service-finder/
 
 ## 📜 License
 
-This project is part of a capstone assignment and is for educational purposes.
+This project is part of a capstone assignment .
