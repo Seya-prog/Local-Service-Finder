@@ -43,7 +43,7 @@ export function SearchPillBar({
           type="text"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          placeholder="New York"
+          placeholder="New york"
           className="w-full bg-transparent text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none"
         />
       </div>

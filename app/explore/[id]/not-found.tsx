@@ -1,4 +1,4 @@
-import Link from "next/link"
+import  Link  from "next/link"
 
 export default function ServiceNotFound() {
   return (
@@ -8,8 +8,7 @@ export default function ServiceNotFound() {
         The service you&apos;re looking for doesn&apos;t exist or has been removed.
       </p>
       <Link
-        href="/explore"
-        className="rounded-lg bg-orange-500 px-6 py-2 text-white transition-colors hover:bg-orange-600"
+        href="/explore" className="rounded-lg bg-orange-500 px-6 py-2 text-white transition-colors hover:bg-orange-600"
       >
         Browse Services
       </Link>
