@@ -98,22 +98,20 @@ export default function SignUpPage() {
                 <button
                   type="button"
                   onClick={() => setRole("customer")}
-                  className={`rounded-md px-3 py-2.5 text-sm font-medium transition-all ${
-                    role === "customer"
+                  className={`rounded-md px-3 py-2.5 text-sm font-medium transition-all ${role === "customer"
                       ? "bg-orange-500 text-white shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   Find Services
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole("provider")}
-                  className={`rounded-md px-3 py-2.5 text-sm font-medium transition-all ${
-                    role === "provider"
+                  className={`rounded-md px-3 py-2.5 text-sm font-medium transition-all ${role === "provider"
                       ? "bg-orange-500 text-white shadow-sm"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   Offer Services
                 </button>
