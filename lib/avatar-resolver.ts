@@ -5,7 +5,6 @@ export const MALE_AVATARS = [
   "/avatars/daniel.jpg",
   "/avatars/mike.jpg",
   "/avatars/john_doe.jpg",
-  "/avatars/michael.jpg",
 ]
 
 export const FEMALE_AVATARS = [
@@ -15,8 +14,6 @@ export const FEMALE_AVATARS = [
   "/avatars/emily.jpg",
   "/avatars/sarah.jpg",
   "/avatars/daisy.jpg",
-  "/avatars/emma.jpg",
-  "/avatars/jessica.jpg",
 ]
 
 const KNOWN_MALE_NAMES = new Set([

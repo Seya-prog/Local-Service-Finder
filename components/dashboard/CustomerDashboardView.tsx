@@ -18,10 +18,13 @@ import {
   MapPin,
 } from "lucide-react"
 import BookingItem, { BookingDisplayItem } from "./BookingItem"
+import { getProviderAvatar } from "@/lib/avatar-resolver"
+import Pagination from "@/components/ui/Pagination"
 
 interface CustomerDashboardViewProps {
   userName: string
   userEmail: string
+  userImage?: string | null
   bookings: BookingDisplayItem[]
   initialTab?: string
 }
@@ -29,6 +32,7 @@ interface CustomerDashboardViewProps {
 export default function CustomerDashboardView({
   userName,
   userEmail,
+  userImage,
   bookings: initialBookings,
   initialTab = "dashboard",
 }: CustomerDashboardViewProps) {
@@ -43,36 +47,9 @@ export default function CustomerDashboardView({
     validTabs.includes(initialTab as any) ? (initialTab as any) : "dashboard"
   )
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [bookingsPage, setBookingsPage] = useState<number>(1)
 
-  // Fallback demo bookings matching the design specification if user has no DB bookings yet
-  const defaultSampleBookings: BookingDisplayItem[] = [
-    {
-      id: "bk-sample-1",
-      serviceTitle: "Home Cleaning",
-      providerName: "Meron Hailu",
-      date: "Apr 12, 2025",
-      status: "Pending",
-      image: "/avatars/meron.jpg",
-    },
-    {
-      id: "bk-sample-2",
-      serviceTitle: "Plumbing",
-      providerName: "Abel Tesfaye",
-      date: "Apr 10, 2025",
-      status: "Accepted",
-      image: "/avatars/abel.jpg",
-    },
-    {
-      id: "bk-sample-3",
-      serviceTitle: "Electrical Services",
-      providerName: "Yonas Alemayehu",
-      date: "Apr 7, 2025",
-      status: "Completed",
-      image: "/avatars/yonas.jpg",
-    },
-  ]
-
-  const displayBookings = initialBookings.length > 0 ? initialBookings : defaultSampleBookings
+  const displayBookings = initialBookings || []
 
   // Stats calculation
   const totalCount = displayBookings.length
@@ -91,6 +68,20 @@ export default function CustomerDashboardView({
     filterStatus === "all"
       ? displayBookings
       : displayBookings.filter((b) => b.status.toLowerCase() === filterStatus.toLowerCase())
+
+  // Pagination for My Bookings
+  const BOOKINGS_PER_PAGE = 5
+  const totalBookings = filteredBookings.length
+  const totalBookingsPages = Math.max(1, Math.ceil(totalBookings / BOOKINGS_PER_PAGE))
+  const paginatedBookings = filteredBookings.slice(
+    (bookingsPage - 1) * BOOKINGS_PER_PAGE,
+    bookingsPage * BOOKINGS_PER_PAGE
+  )
+
+  const handleFilterStatusChange = (status: string) => {
+    setFilterStatus(status)
+    setBookingsPage(1)
+  }
 
   const handleNavClick = (tab: "dashboard" | "bookings" | "profile" | "settings" | "help") => {
     setActiveNav(tab)
@@ -257,9 +248,25 @@ export default function CustomerDashboardView({
                     </div>
 
                     <div className="space-y-3">
-                      {displayBookings.map((b) => (
-                        <BookingItem key={b.id} booking={b} />
-                      ))}
+                      {displayBookings.length === 0 ? (
+                        <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200 p-6">
+                          <Calendar className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm font-bold text-gray-700">No bookings yet</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Browse verified local services and book an appointment
+                          </p>
+                          <Link
+                            href="/explore"
+                            className="mt-4 inline-block rounded-xl bg-[#FF6B00] px-5 py-2.5 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm"
+                          >
+                            Explore Services
+                          </Link>
+                        </div>
+                      ) : (
+                        displayBookings.slice(0, 5).map((b) => (
+                          <BookingItem key={b.id} booking={b} />
+                        ))
+                      )}
                     </div>
                   </div>
                 </>
@@ -282,7 +289,7 @@ export default function CustomerDashboardView({
                         <button
                           key={st}
                           type="button"
-                          onClick={() => setFilterStatus(st)}
+                          onClick={() => handleFilterStatusChange(st)}
                           className={`px-3 py-1.5 rounded-lg capitalize transition-all ${
                             filterStatus === st
                               ? "bg-white text-gray-900 shadow-xs font-bold"
@@ -309,7 +316,22 @@ export default function CustomerDashboardView({
                         </Link>
                       </div>
                     ) : (
-                      filteredBookings.map((b) => <BookingItem key={b.id} booking={b} />)
+                      <>
+                        <div className="space-y-3">
+                          {paginatedBookings.map((b) => (
+                            <BookingItem key={b.id} booking={b} />
+                          ))}
+                        </div>
+
+                        <Pagination
+                          currentPage={bookingsPage}
+                          totalPages={totalBookingsPages}
+                          totalItems={totalBookings}
+                          itemsPerPage={BOOKINGS_PER_PAGE}
+                          itemName="bookings"
+                          onPageChange={setBookingsPage}
+                        />
+                      </>
                     )}
                   </div>
                 </div>
@@ -328,8 +350,8 @@ export default function CustomerDashboardView({
                     <div className="flex items-center gap-4 pb-6 border-b border-gray-100">
                       <div className="relative h-20 w-20 rounded-full overflow-hidden bg-orange-100 ring-4 ring-orange-100 shrink-0">
                         <Image
-                          src="/avatars/john_doe.jpg"
-                          alt={userName || "Dawit Kebede"}
+                          src={userImage || getProviderAvatar(userName, "customer")}
+                          alt={userName}
                           fill
                           sizes="80px"
                           className="object-cover"
@@ -337,16 +359,16 @@ export default function CustomerDashboardView({
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h2 className="text-lg font-bold text-gray-900">{userName || "Dawit Kebede"}</h2>
+                          <h2 className="text-lg font-bold text-gray-900">{userName}</h2>
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                             <CheckCircle2 className="h-3 w-3" />
                             <span>Verified</span>
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">{userEmail || "dawit.k@gmail.com"}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{userEmail}</p>
                         <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
                           <MapPin className="h-3 w-3 text-orange-500" />
-                          <span>Bole, Addis Ababa, Ethiopia</span>
+                          <span>Addis Ababa, Ethiopia</span>
                         </p>
                       </div>
                     </div>
@@ -357,7 +379,7 @@ export default function CustomerDashboardView({
                         <input
                           type="text"
                           disabled
-                          value={userName || "Dawit Kebede"}
+                          value={userName}
                           className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-800 font-medium"
                         />
                       </div>
@@ -366,7 +388,7 @@ export default function CustomerDashboardView({
                         <input
                           type="email"
                           disabled
-                          value={userEmail || "dawit.k@gmail.com"}
+                          value={userEmail}
                           className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-800 font-medium"
                         />
                       </div>
@@ -375,8 +397,8 @@ export default function CustomerDashboardView({
                         <input
                           type="text"
                           disabled
-                          value="+251 911 234 567"
-                          className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-800 font-medium"
+                          value="Not provided"
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-500 font-medium italic"
                         />
                       </div>
                       <div>
@@ -384,7 +406,7 @@ export default function CustomerDashboardView({
                         <input
                           type="text"
                           disabled
-                          value="Bole Sub-City, Addis Ababa"
+                          value="Addis Ababa, Ethiopia"
                           className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-800 font-medium"
                         />
                       </div>

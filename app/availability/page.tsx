@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Search,
 } from "lucide-react"
+import Pagination from "@/components/ui/Pagination"
 
 interface ProviderAvailability {
   id: string
@@ -35,6 +36,7 @@ export default function AvailabilityPage() {
   const [selectedDay, setSelectedDay] = useState<string>("Today")
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
   const [selectedArea, setSelectedArea] = useState<string>("All")
+  const [currentPage, setCurrentPage] = useState(1)
   const [bookingModalProvider, setBookingModalProvider] = useState<ProviderAvailability | null>(null)
   const [bookingConfirmed, setBookingConfirmed] = useState(false)
 
@@ -140,6 +142,30 @@ export default function AvailabilityPage() {
     return matchesDay && matchesCategory && matchesArea
   })
 
+  // Pagination calculation
+  const ITEMS_PER_PAGE = 6
+  const totalItems = filteredProviders.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE))
+  const paginatedProviders = filteredProviders.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  const handleDayChange = (d: string) => {
+    setSelectedDay(d)
+    setCurrentPage(1)
+  }
+
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat)
+    setCurrentPage(1)
+  }
+
+  const handleAreaChange = (area: string) => {
+    setSelectedArea(area)
+    setCurrentPage(1)
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] py-8 sm:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
@@ -170,7 +196,7 @@ export default function AvailabilityPage() {
                   <button
                     key={d}
                     type="button"
-                    onClick={() => setSelectedDay(d)}
+                    onClick={() => handleDayChange(d)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 ${
                       selectedDay === d
                         ? "bg-[#FF6B00] text-white shadow-xs"
@@ -190,7 +216,7 @@ export default function AvailabilityPage() {
               </label>
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => handleCategoryChange(e.target.value)}
                 className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs font-semibold text-gray-800 outline-hidden focus:border-[#FF6B00]"
               >
                 <option value="All">All Categories</option>
@@ -210,7 +236,7 @@ export default function AvailabilityPage() {
               </label>
               <select
                 value={selectedArea}
-                onChange={(e) => setSelectedArea(e.target.value)}
+                onChange={(e) => handleAreaChange(e.target.value)}
                 className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs font-semibold text-gray-800 outline-hidden focus:border-[#FF6B00]"
               >
                 <option value="All">All Sub-Cities & Areas</option>
@@ -233,7 +259,7 @@ export default function AvailabilityPage() {
 
         {/* Providers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProviders.map((provider) => (
+          {paginatedProviders.map((provider) => (
             <div
               key={provider.id}
               className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:border-orange-200 transition-all flex flex-col justify-between space-y-4"
@@ -314,6 +340,15 @@ export default function AvailabilityPage() {
             </div>
           ))}
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={ITEMS_PER_PAGE}
+          itemName="available providers"
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   )

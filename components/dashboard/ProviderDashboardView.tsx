@@ -22,6 +22,7 @@ import {
 import { updateBookingStatus, deleteService } from "@/lib/actions"
 import CreateEditService from "./CreateEditService"
 import { getProviderAvatar } from "@/lib/avatar-resolver"
+import Pagination from "@/components/ui/Pagination"
 
 export interface ProviderBookingItem {
   id: string
@@ -47,6 +48,7 @@ export interface ProviderServiceItem {
 interface ProviderDashboardViewProps {
   userName: string
   userEmail: string
+  userImage?: string | null
   services: ProviderServiceItem[]
   bookings: ProviderBookingItem[]
   initialTab?: string
@@ -55,6 +57,7 @@ interface ProviderDashboardViewProps {
 export default function ProviderDashboardView({
   userName,
   userEmail,
+  userImage,
   services: initialServices,
   bookings: initialBookings,
   initialTab = "dashboard",
@@ -68,87 +71,22 @@ export default function ProviderDashboardView({
   const [servicesViewMode, setServicesViewMode] = useState<"form" | "list">("list")
   const [editingService, setEditingService] = useState<ProviderServiceItem | null>(null)
 
-  const [bookingsList, setBookingsList] = useState<ProviderBookingItem[]>(() => {
-    if (initialBookings.length > 0) return initialBookings
-    return [
-      {
-        id: "bk-req-1",
-        serviceTitle: "Home Cleaning",
-        customerName: "Dawit Haile",
-        customerImage: "/avatars/yonas.jpg",
-        date: "Apr 12, 2025",
-        status: "Pending",
-        price: 200,
-      },
-      {
-        id: "bk-req-2",
-        serviceTitle: "Plumbing",
-        customerName: "Hiwot Girma",
-        customerImage: "/avatars/hana.jpg",
-        date: "Apr 11, 2025",
-        status: "Pending",
-        price: 250,
-      },
-      {
-        id: "bk-req-3",
-        serviceTitle: "Electrical Services",
-        customerName: "Kidus Solomon",
-        customerImage: "/avatars/solomon.jpg",
-        date: "Apr 10, 2025",
-        status: "Accepted",
-        price: 220,
-      },
-    ]
-  })
-
-  const [servicesList, setServicesList] = useState<ProviderServiceItem[]>(() => {
-    if (initialServices.length > 0) return initialServices
-    return [
-      {
-        id: "srv-demo-1",
-        title: "Home Cleaning",
-        category: "Home Cleaning",
-        price: "200",
-        city: "Addis Ababa",
-        location: "Bole",
-        description: "Professional eco-friendly home and apartment cleaning in Addis Ababa.",
-        image: "/avatars/meron.jpg",
-      },
-      {
-        id: "srv-demo-2",
-        title: "Plumbing",
-        category: "Plumbing",
-        price: "250",
-        city: "Addis Ababa",
-        location: "Kazanchis",
-        description: "Emergency leak repairs, pipe fixtures, and residential maintenance.",
-        image: "/avatars/abel.jpg",
-      },
-      {
-        id: "srv-demo-3",
-        title: "Electrical Services",
-        category: "Electrical Services",
-        price: "220",
-        city: "Addis Ababa",
-        location: "Mexico",
-        description: "Lighting fixtures, circuit breakers, and wiring troubleshooting.",
-        image: "/avatars/yonas.jpg",
-      },
-      {
-        id: "srv-demo-4",
-        title: "Appliance Repair",
-        category: "Appliance Repair",
-        price: "300",
-        city: "Addis Ababa",
-        location: "Sarbet",
-        description: "Kitchen appliances, water heaters, and washing machine fixes.",
-        image: "/avatars/solomon.jpg",
-      },
-    ]
-  })
+  const [bookingsList, setBookingsList] = useState<ProviderBookingItem[]>(() => initialBookings || [])
+  const [servicesList, setServicesList] = useState<ProviderServiceItem[]>(() => initialServices || [])
 
   const [bookingFilter, setBookingFilter] = useState<string>("all")
+  const [servicesPage, setServicesPage] = useState<number>(1)
+  const [bookingsPage, setBookingsPage] = useState<number>(1)
   const [isPending, startTransition] = useTransition()
+
+  // Pagination for services
+  const SERVICES_PER_PAGE = 6
+  const totalServices = servicesList.length
+  const totalServicesPages = Math.max(1, Math.ceil(totalServices / SERVICES_PER_PAGE))
+  const paginatedServices = servicesList.slice(
+    (servicesPage - 1) * SERVICES_PER_PAGE,
+    servicesPage * SERVICES_PER_PAGE
+  )
 
   // Dynamic stat counts
   const totalServicesCount = servicesList.length
@@ -158,7 +96,16 @@ export default function ProviderDashboardView({
   const completedCount = bookingsList.filter(
     (b) => b.status.toLowerCase() === "completed" || b.status.toLowerCase() === "accepted"
   ).length
-  const earningsAmount = "32,500 ETB"
+
+  const totalRevenueNumber = bookingsList
+    .filter((b) => b.status.toLowerCase() === "completed" || b.status.toLowerCase() === "accepted")
+    .reduce((sum, b) => sum + (Number(b.price) || 0), 0)
+  const earningsAmount = `${totalRevenueNumber.toLocaleString()} ETB`
+
+  const handleBookingFilterChange = (filter: string) => {
+    setBookingFilter(filter)
+    setBookingsPage(1)
+  }
 
   const handleStatusChange = (bookingId: string, newStatus: "Accepted" | "Declined") => {
     setBookingsList((prev) =>
@@ -218,6 +165,15 @@ export default function ProviderDashboardView({
       ? bookingsList
       : bookingsList.filter((b) => b.status.toLowerCase() === bookingFilter.toLowerCase())
 
+  // Pagination for bookings
+  const BOOKINGS_PER_PAGE = 6
+  const totalBookings = filteredBookings.length
+  const totalBookingsPages = Math.max(1, Math.ceil(totalBookings / BOOKINGS_PER_PAGE))
+  const paginatedBookings = filteredBookings.slice(
+    (bookingsPage - 1) * BOOKINGS_PER_PAGE,
+    bookingsPage * BOOKINGS_PER_PAGE
+  )
+
   const handleNavClick = (tab: "dashboard" | "services" | "bookings" | "earnings" | "profile" | "settings" | "help") => {
     setActiveNav(tab)
     if (tab === "services") {
@@ -242,11 +198,10 @@ export default function ProviderDashboardView({
                 <button
                   type="button"
                   onClick={() => handleNavClick("dashboard")}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    activeNav === "dashboard"
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${activeNav === "dashboard"
                       ? "bg-orange-50 text-[#FF6B00] font-bold shadow-xs"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   <span>Dashboard</span>
@@ -255,11 +210,10 @@ export default function ProviderDashboardView({
                 <button
                   type="button"
                   onClick={() => handleNavClick("services")}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    activeNav === "services"
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${activeNav === "services"
                       ? "bg-orange-50 text-[#FF6B00] font-bold shadow-xs"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <Layers className="h-4 w-4" />
                   <span>My Services</span>
@@ -268,11 +222,10 @@ export default function ProviderDashboardView({
                 <button
                   type="button"
                   onClick={() => handleNavClick("bookings")}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    activeNav === "bookings"
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${activeNav === "bookings"
                       ? "bg-orange-50 text-[#FF6B00] font-bold shadow-xs"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <CalendarCheck className="h-4 w-4" />
                   <span>Bookings</span>
@@ -281,11 +234,10 @@ export default function ProviderDashboardView({
                 <button
                   type="button"
                   onClick={() => handleNavClick("earnings")}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    activeNav === "earnings"
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${activeNav === "earnings"
                       ? "bg-orange-50 text-[#FF6B00] font-bold shadow-xs"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <CircleDollarSign className="h-4 w-4" />
                   <span>Earnings</span>
@@ -294,11 +246,10 @@ export default function ProviderDashboardView({
                 <button
                   type="button"
                   onClick={() => handleNavClick("profile")}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    activeNav === "profile"
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${activeNav === "profile"
                       ? "bg-orange-50 text-[#FF6B00] font-bold shadow-xs"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <User className="h-4 w-4" />
                   <span>Profile</span>
@@ -307,11 +258,10 @@ export default function ProviderDashboardView({
                 <button
                   type="button"
                   onClick={() => handleNavClick("settings")}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    activeNav === "settings"
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${activeNav === "settings"
                       ? "bg-orange-50 text-[#FF6B00] font-bold shadow-xs"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
@@ -320,11 +270,10 @@ export default function ProviderDashboardView({
                 <button
                   type="button"
                   onClick={() => handleNavClick("help")}
-                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    activeNav === "help"
+                  className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${activeNav === "help"
                       ? "bg-orange-50 text-[#FF6B00] font-bold shadow-xs"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <HelpCircle className="h-4 w-4" />
                   <span>Help</span>
@@ -411,95 +360,105 @@ export default function ProviderDashboardView({
                     </div>
 
                     <div className="space-y-3">
-                      {bookingsList.slice(0, 5).map((req) => {
-                        const isPendingReq =
-                          req.status.toLowerCase() === "pending" ||
-                          req.status.toLowerCase() === "upcoming"
-                        const isAcceptedReq =
-                          req.status.toLowerCase() === "accepted" ||
-                          req.status.toLowerCase() === "completed"
+                      {bookingsList.length === 0 ? (
+                        <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                          <CalendarCheck className="h-7 w-7 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm font-bold text-gray-700">No booking requests yet</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            When customers book your services, requests will appear here.
+                          </p>
+                        </div>
+                      ) : (
+                        bookingsList.slice(0, 5).map((req) => {
+                          const isPendingReq =
+                            req.status.toLowerCase() === "pending" ||
+                            req.status.toLowerCase() === "upcoming"
+                          const isAcceptedReq =
+                            req.status.toLowerCase() === "accepted" ||
+                            req.status.toLowerCase() === "completed"
 
-                        return (
-                          <div
-                            key={req.id}
-                            className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border border-gray-100 bg-white hover:border-orange-100 transition shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
-                          >
-                            {/* Left: Thumbnail & Customer / Service Details */}
-                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                              <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-2xl overflow-hidden bg-orange-50 shrink-0">
-                                {req.customerImage ? (
-                                  <Image
-                                    src={req.customerImage}
-                                    alt={req.customerName}
-                                    fill
-                                    sizes="56px"
-                                    className="object-cover"
-                                  />
+                          return (
+                            <div
+                              key={req.id}
+                              className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border border-gray-100 bg-white hover:border-orange-100 transition shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
+                            >
+                              {/* Left: Thumbnail & Customer / Service Details */}
+                              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                                <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-2xl overflow-hidden bg-orange-50 shrink-0">
+                                  {req.customerImage ? (
+                                    <Image
+                                      src={req.customerImage}
+                                      alt={req.customerName}
+                                      fill
+                                      sizes="56px"
+                                      className="object-cover"
+                                    />
+                                  ) : (
+                                    <div className="h-full w-full flex items-center justify-center font-bold text-orange-600 bg-orange-100/60">
+                                      {req.customerName.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="truncate">
+                                  <h4 className="text-sm sm:text-base font-extrabold text-gray-900 truncate">
+                                    {req.serviceTitle}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 font-medium">
+                                    {req.customerName}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                                    <span>{req.date}</span>
+                                    <span>•</span>
+                                    <span
+                                      className={
+                                        isPendingReq
+                                          ? "text-[#FF6B00] font-semibold"
+                                          : isAcceptedReq
+                                            ? "text-emerald-600 font-semibold"
+                                            : "text-gray-500 font-semibold"
+                                      }
+                                    >
+                                      {req.status}
+                                    </span>
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Right: Actions */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                {isPendingReq ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStatusChange(req.id, "Accepted")}
+                                      className="rounded-xl bg-[#FF6B00] px-4 sm:px-5 py-2 text-xs font-bold text-white hover:bg-orange-600 transition shadow-xs"
+                                    >
+                                      Accept
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStatusChange(req.id, "Declined")}
+                                      className="rounded-xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-xs"
+                                    >
+                                      Decline
+                                    </button>
+                                  </>
+                                ) : isAcceptedReq ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-700">
+                                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                                    <span>Accepted</span>
+                                  </span>
                                 ) : (
-                                  <div className="h-full w-full flex items-center justify-center font-bold text-orange-600 bg-orange-100/60">
-                                    {req.customerName.charAt(0)}
-                                  </div>
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-3 py-1.5 text-xs font-bold text-rose-700">
+                                    <span>Declined</span>
+                                  </span>
                                 )}
                               </div>
-
-                              <div className="truncate">
-                                <h4 className="text-sm sm:text-base font-extrabold text-gray-900 truncate">
-                                  {req.serviceTitle}
-                                </h4>
-                                <p className="text-xs text-gray-500 font-medium">
-                                  {req.customerName}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
-                                  <span>{req.date}</span>
-                                  <span>•</span>
-                                  <span
-                                    className={
-                                      isPendingReq
-                                        ? "text-[#FF6B00] font-semibold"
-                                        : isAcceptedReq
-                                        ? "text-emerald-600 font-semibold"
-                                        : "text-gray-500 font-semibold"
-                                    }
-                                  >
-                                    {req.status}
-                                  </span>
-                                </p>
-                              </div>
                             </div>
-
-                            {/* Right: Actions */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              {isPendingReq ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStatusChange(req.id, "Accepted")}
-                                    className="rounded-xl bg-[#FF6B00] px-4 sm:px-5 py-2 text-xs font-bold text-white hover:bg-orange-600 transition shadow-xs"
-                                  >
-                                    Accept
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStatusChange(req.id, "Declined")}
-                                    className="rounded-xl border border-gray-200 bg-white px-3.5 sm:px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-xs"
-                                  >
-                                    Decline
-                                  </button>
-                                </>
-                              ) : isAcceptedReq ? (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-700">
-                                  <Check className="h-3.5 w-3.5 text-emerald-600" />
-                                  <span>Accepted</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-3 py-1.5 text-xs font-bold text-rose-700">
-                                  <span>Declined</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        })
+                      )}
                     </div>
                   </div>
                 </>
@@ -549,69 +508,80 @@ export default function ProviderDashboardView({
                         </div>
                       ) : (
                         /* Services Grid */
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          {servicesList.map((service) => (
-                            <div
-                              key={service.id}
-                              className="rounded-2xl border border-gray-100 bg-white hover:border-orange-200 transition shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col justify-between"
-                            >
-                              <div className="relative h-40 sm:h-44 w-full bg-orange-50">
-                                <Image
-                                  src={getProviderAvatar(userName, service.category, service.image)}
-                                  alt={service.title}
-                                  fill
-                                  sizes="(max-width: 768px) 100vw, 50vw"
-                                  className="object-cover"
-                                />
-                                <div className="absolute top-3 left-3">
-                                  <span className="text-xs font-bold text-orange-600 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs">
-                                    {service.category}
-                                  </span>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {paginatedServices.map((service) => (
+                              <div
+                                key={service.id}
+                                className="rounded-2xl border border-gray-100 bg-white hover:border-orange-200 transition shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col justify-between"
+                              >
+                                <div className="relative h-40 sm:h-44 w-full bg-orange-50">
+                                  <Image
+                                    src={getProviderAvatar(userName, service.category, service.image)}
+                                    alt={service.title}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover"
+                                  />
+                                  <div className="absolute top-3 left-3">
+                                    <span className="text-xs font-bold text-orange-600 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs">
+                                      {service.category}
+                                    </span>
+                                  </div>
+                                  <div className="absolute top-3 right-3">
+                                    <span className="text-xs font-black text-gray-900 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs">
+                                      {service.price} ETB<span className="text-[10px] font-normal text-gray-500">/hr</span>
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="absolute top-3 right-3">
-                                  <span className="text-xs font-black text-gray-900 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full shadow-xs">
-                                    {service.price} ETB<span className="text-[10px] font-normal text-gray-500">/hr</span>
-                                  </span>
-                                </div>
-                              </div>
 
-                              <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
-                                <div>
-                                  <h3 className="text-base sm:text-lg font-extrabold text-gray-900 line-clamp-1">
-                                    {service.title}
-                                  </h3>
-                                  <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-1.5">
-                                    <MapPin className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                                    <span className="truncate">{service.city} — {service.location}</span>
-                                  </p>
-                                  {service.description && (
-                                    <p className="text-xs text-gray-600 mt-2.5 line-clamp-2 leading-relaxed">
-                                      {service.description}
+                                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+                                  <div>
+                                    <h3 className="text-base sm:text-lg font-extrabold text-gray-900 line-clamp-1">
+                                      {service.title}
+                                    </h3>
+                                    <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-1.5">
+                                      <MapPin className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                                      <span className="truncate">{service.city} — {service.location}</span>
                                     </p>
-                                  )}
-                                </div>
+                                    {service.description && (
+                                      <p className="text-xs text-gray-600 mt-2.5 line-clamp-2 leading-relaxed">
+                                        {service.description}
+                                      </p>
+                                    )}
+                                  </div>
 
-                                <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-end gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleEditService(service)}
-                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-[#FF6B00] hover:bg-orange-50 px-3 py-1.5 rounded-xl transition"
-                                  >
-                                    <Edit3 className="h-3.5 w-3.5" />
-                                    <span>Edit</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteService(service.id)}
-                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-xl transition"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                    <span>Delete</span>
-                                  </button>
+                                  <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEditService(service)}
+                                      className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-[#FF6B00] hover:bg-orange-50 px-3 py-1.5 rounded-xl transition"
+                                    >
+                                      <Edit3 className="h-3.5 w-3.5" />
+                                      <span>Edit</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteService(service.id)}
+                                      className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-xl transition"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                      <span>Delete</span>
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+
+                          <Pagination
+                            currentPage={servicesPage}
+                            totalPages={totalServicesPages}
+                            totalItems={totalServices}
+                            itemsPerPage={SERVICES_PER_PAGE}
+                            itemName="services"
+                            onPageChange={setServicesPage}
+                          />
                         </div>
                       )}
                     </>
@@ -664,12 +634,11 @@ export default function ProviderDashboardView({
                         <button
                           key={filter}
                           type="button"
-                          onClick={() => setBookingFilter(filter)}
-                          className={`px-3 py-1.5 rounded-lg capitalize transition shrink-0 ${
-                            bookingFilter === filter
+                          onClick={() => handleBookingFilterChange(filter)}
+                          className={`px-3 py-1.5 rounded-lg capitalize transition shrink-0 ${bookingFilter === filter
                               ? "bg-white text-gray-900 shadow-xs font-bold"
                               : "text-gray-500 hover:text-gray-900"
-                          }`}
+                            }`}
                         >
                           {filter}
                         </button>
@@ -687,91 +656,104 @@ export default function ProviderDashboardView({
                         </p>
                       </div>
                     ) : (
-                      filteredBookings.map((req) => {
-                        const isPendingReq =
-                          req.status.toLowerCase() === "pending" ||
-                          req.status.toLowerCase() === "upcoming"
-                        const isAcceptedReq =
-                          req.status.toLowerCase() === "accepted" ||
-                          req.status.toLowerCase() === "completed"
+                      <>
+                        <div className="space-y-3">
+                          {paginatedBookings.map((req) => {
+                            const isPendingReq =
+                              req.status.toLowerCase() === "pending" ||
+                              req.status.toLowerCase() === "upcoming"
+                            const isAcceptedReq =
+                              req.status.toLowerCase() === "accepted" ||
+                              req.status.toLowerCase() === "completed"
 
-                        return (
-                          <div
-                            key={req.id}
-                            className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 bg-white hover:border-orange-100 transition shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
-                          >
-                            <div className="flex items-center gap-4 min-w-0">
-                              <div className="relative h-12 w-12 rounded-2xl overflow-hidden bg-orange-50 shrink-0">
-                                {req.customerImage ? (
-                                  <Image
-                                    src={req.customerImage}
-                                    alt={req.customerName}
-                                    fill
-                                    sizes="56px"
-                                    className="object-cover"
-                                  />
-                                ) : (
-                                  <div className="h-full w-full flex items-center justify-center font-bold text-orange-600 bg-orange-100/60">
-                                    {req.customerName.charAt(0)}
+                            return (
+                              <div
+                                key={req.id}
+                                className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 bg-white hover:border-orange-100 transition shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
+                              >
+                                <div className="flex items-center gap-4 min-w-0">
+                                  <div className="relative h-12 w-12 rounded-2xl overflow-hidden bg-orange-50 shrink-0">
+                                    {req.customerImage ? (
+                                      <Image
+                                        src={req.customerImage}
+                                        alt={req.customerName}
+                                        fill
+                                        sizes="56px"
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <div className="h-full w-full flex items-center justify-center font-bold text-orange-600 bg-orange-100/60">
+                                        {req.customerName.charAt(0)}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                              <div>
-                                <h4 className="text-base font-extrabold text-gray-900">
-                                  {req.serviceTitle}
-                                </h4>
-                                <p className="text-xs text-gray-500 font-medium">
-                                  {req.customerName}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  {req.date} •{" "}
-                                  <span
-                                    className={
-                                      isPendingReq
-                                        ? "text-[#FF6B00] font-semibold"
-                                        : isAcceptedReq
-                                        ? "text-emerald-600 font-semibold"
-                                        : "text-gray-500 font-semibold"
-                                    }
-                                  >
-                                    {req.status}
-                                  </span>
-                                </p>
-                              </div>
-                            </div>
+                                  <div>
+                                    <h4 className="text-base font-extrabold text-gray-900">
+                                      {req.serviceTitle}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 font-medium">
+                                      {req.customerName}
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      {req.date} •{" "}
+                                      <span
+                                        className={
+                                          isPendingReq
+                                            ? "text-[#FF6B00] font-semibold"
+                                            : isAcceptedReq
+                                              ? "text-emerald-600 font-semibold"
+                                              : "text-gray-500 font-semibold"
+                                        }
+                                      >
+                                        {req.status}
+                                      </span>
+                                    </p>
+                                  </div>
+                                </div>
 
-                            <div className="flex items-center gap-2">
-                              {isPendingReq ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStatusChange(req.id, "Accepted")}
-                                    className="rounded-xl bg-[#FF6B00] px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition"
-                                  >
-                                    Accept
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStatusChange(req.id, "Declined")}
-                                    className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
-                                  >
-                                    Decline
-                                  </button>
-                                </>
-                              ) : isAcceptedReq ? (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-700">
-                                  <Check className="h-3.5 w-3.5 text-emerald-600" />
-                                  <span>Accepted</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-3 py-1.5 text-xs font-bold text-rose-700">
-                                  <span>Declined</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })
+                                <div className="flex items-center gap-2">
+                                  {isPendingReq ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleStatusChange(req.id, "Accepted")}
+                                        className="rounded-xl bg-[#FF6B00] px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition"
+                                      >
+                                        Accept
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleStatusChange(req.id, "Declined")}
+                                        className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
+                                      >
+                                        Decline
+                                      </button>
+                                    </>
+                                  ) : isAcceptedReq ? (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-700">
+                                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                                      <span>Accepted</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-3 py-1.5 text-xs font-bold text-rose-700">
+                                      <span>Declined</span>
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        <Pagination
+                          currentPage={bookingsPage}
+                          totalPages={totalBookingsPages}
+                          totalItems={totalBookings}
+                          itemsPerPage={BOOKINGS_PER_PAGE}
+                          itemName="requests"
+                          onPageChange={setBookingsPage}
+                        />
+                      </>
                     )}
                   </div>
                 </div>
@@ -790,24 +772,48 @@ export default function ProviderDashboardView({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="p-5 rounded-2xl border border-gray-100 bg-white shadow-xs">
                       <span className="text-xs text-gray-400 font-semibold">Total Revenue</span>
-                      <p className="text-3xl font-black text-gray-950 mt-1">32,500.00 ETB</p>
+                      <p className="text-3xl font-black text-gray-950 mt-1">
+                        {totalRevenueNumber.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        ETB
+                      </p>
                       <span className="text-xs text-emerald-600 font-bold mt-1 inline-block">
-                        +18% from last month
+                        {completedCount > 0
+                          ? `${completedCount} completed jobs`
+                          : "No completed jobs yet"}
                       </span>
                     </div>
 
                     <div className="p-5 rounded-2xl border border-gray-100 bg-white shadow-xs">
                       <span className="text-xs text-gray-400 font-semibold">Available Payout</span>
-                      <p className="text-3xl font-black text-[#FF6B00] mt-1">14,800.00 ETB</p>
+                      <p className="text-3xl font-black text-[#FF6B00] mt-1">
+                        {totalRevenueNumber.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        ETB
+                      </p>
                       <span className="text-xs text-gray-400 mt-1 inline-block">
-                        Next payout on Friday
+                        {completedCount > 0 ? "Processed automatically" : "No payout pending"}
                       </span>
                     </div>
 
                     <div className="p-5 rounded-2xl border border-gray-100 bg-white shadow-xs">
                       <span className="text-xs text-gray-400 font-semibold">Average Per Job</span>
-                      <p className="text-3xl font-black text-gray-950 mt-1">1,250.00 ETB</p>
-                      <span className="text-xs text-gray-400 mt-1 inline-block">Across 12 completed jobs</span>
+                      <p className="text-3xl font-black text-gray-950 mt-1">
+                        {completedCount > 0
+                          ? (totalRevenueNumber / completedCount).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                          : "0.00"}{" "}
+                        ETB
+                      </p>
+                      <span className="text-xs text-gray-400 mt-1 inline-block">
+                        Across {completedCount} completed {completedCount === 1 ? "job" : "jobs"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -821,24 +827,61 @@ export default function ProviderDashboardView({
                     <p className="text-xs text-gray-500 mt-1">Manage your public service presence</p>
                   </div>
 
-                  <div className="p-6 rounded-2xl border border-gray-100 bg-white space-y-4 max-w-lg">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Provider Name</label>
-                      <input
-                        type="text"
-                        disabled
-                        value={userName || "Abel Tesfaye"}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700"
-                      />
+                  <div className="p-6 sm:p-8 rounded-3xl border border-gray-100 bg-white space-y-6 max-w-xl shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+                    {/* Avatar & Header badge */}
+                    <div className="flex items-center gap-4 pb-6 border-b border-gray-100">
+                      <div className="relative h-20 w-20 rounded-full overflow-hidden bg-orange-100 ring-4 ring-orange-100 shrink-0">
+                        <Image
+                          src={userImage || getProviderAvatar(userName, "provider")}
+                          alt={userName}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-lg font-bold text-gray-900">{userName}</h2>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+                            Verified Provider
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{userEmail}</p>
+                        <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-orange-500" />
+                          <span>Addis Ababa, Ethiopia</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
-                      <input
-                        type="email"
-                        disabled
-                        value={userEmail || "abel@localcare.et"}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700"
-                      />
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Provider Name</label>
+                        <input
+                          type="text"
+                          disabled
+                          value={userName}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
+                        <input
+                          type="email"
+                          disabled
+                          value={userEmail}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Location</label>
+                        <input
+                          type="text"
+                          disabled
+                          value="Addis Ababa, Ethiopia"
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50/80 p-3 text-xs sm:text-sm text-gray-800 font-medium"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

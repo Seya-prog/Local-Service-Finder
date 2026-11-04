@@ -15,12 +15,14 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import { allReviews, ReviewItem } from "@/lib/data"
+import Pagination from "@/components/ui/Pagination"
 
 export default function ReviewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
   const [selectedSubCity, setSelectedSubCity] = useState<string>("All")
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [helpfulLiked, setHelpfulLiked] = useState<Record<string, boolean>>({})
+  const [currentPage, setCurrentPage] = useState(1)
 
   const reviews: ReviewItem[] = allReviews
 
@@ -40,6 +42,37 @@ export default function ReviewsPage() {
       r.serviceTitle.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesCat && matchesCity && matchesQuery
   })
+
+  // Pagination calculation
+  const REVIEWS_PER_PAGE = 6
+  const totalReviews = filteredReviews.length
+  const totalPages = Math.max(1, Math.ceil(totalReviews / REVIEWS_PER_PAGE))
+  const paginatedReviews = filteredReviews.slice(
+    (currentPage - 1) * REVIEWS_PER_PAGE,
+    currentPage * REVIEWS_PER_PAGE
+  )
+
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat)
+    setCurrentPage(1)
+  }
+
+  const handleSubCityChange = (city: string) => {
+    setSelectedSubCity(city)
+    setCurrentPage(1)
+  }
+
+  const handleSearchChange = (q: string) => {
+    setSearchQuery(q)
+    setCurrentPage(1)
+  }
+
+  const handleResetFilters = () => {
+    setSelectedCategory("All")
+    setSelectedSubCity("All")
+    setSearchQuery("")
+    setCurrentPage(1)
+  }
 
   const toggleHelpful = (id: string) => {
     setHelpfulLiked((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -122,7 +155,7 @@ export default function ReviewsPage() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search reviews by customer, provider name, or service keyword..."
               className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 pl-11 pr-4 py-3 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF6B00] focus:bg-white focus:ring-1 focus:ring-[#FF6B00] outline-hidden transition"
             />
@@ -138,7 +171,7 @@ export default function ReviewsPage() {
               <button
                 key={cat}
                 type="button"
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => handleCategoryChange(cat)}
                 className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition shrink-0 cursor-pointer ${
                   selectedCategory === cat
                     ? "bg-[#FF6B00] text-white shadow-xs"
@@ -160,7 +193,7 @@ export default function ReviewsPage() {
               <button
                 key={city}
                 type="button"
-                onClick={() => setSelectedSubCity(city)}
+                onClick={() => handleSubCityChange(city)}
                 className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition shrink-0 cursor-pointer ${
                   selectedSubCity === city
                     ? "bg-gray-900 text-white"
@@ -182,11 +215,7 @@ export default function ReviewsPage() {
             {(selectedCategory !== "All" || selectedSubCity !== "All" || searchQuery) && (
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedCategory("All")
-                  setSelectedSubCity("All")
-                  setSearchQuery("")
-                }}
+                onClick={handleResetFilters}
                 className="text-[#FF6B00] font-bold hover:underline cursor-pointer"
               >
                 Reset filters
@@ -195,7 +224,7 @@ export default function ReviewsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredReviews.map((rev) => (
+            {paginatedReviews.map((rev) => (
               <div
                 key={rev.id}
                 className="p-5 sm:p-6 rounded-3xl border border-gray-100 bg-white shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between space-y-4 hover:border-orange-200 hover:shadow-md transition-all"
@@ -281,6 +310,15 @@ export default function ReviewsPage() {
               </div>
             ))}
           </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalReviews}
+            itemsPerPage={REVIEWS_PER_PAGE}
+            itemName="reviews"
+            onPageChange={setCurrentPage}
+          />
         </div>
 
         {/* Bottom CTA */}
