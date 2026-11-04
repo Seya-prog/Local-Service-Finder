@@ -7,6 +7,7 @@ import { services as staticServices } from "@/lib/data"
 import ServiceCard from "@/components/services/ServiceCard"
 import { SearchPillBar, FilterSidebar } from "@/components/services/FilterBar"
 import { getProviderAvatar } from "@/lib/avatar-resolver"
+import Pagination from "@/components/ui/Pagination"
 
 export const metadata = {
   title: "Services — Local Service Finder",
@@ -133,6 +134,27 @@ export default async function ExplorePage({
     })
   }
 
+  // Pagination calculation
+  const pageParam = typeof params.page === "string" ? parseInt(params.page, 10) : 1
+  const currentPage = Math.max(1, isNaN(pageParam) ? 1 : pageParam)
+  const ITEMS_PER_PAGE = 6
+  const totalItems = allServices.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE))
+  const paginatedServices = allServices.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  const createPageUrl = (p: number) => {
+    const qp = new URLSearchParams()
+    if (category) qp.set("category", category)
+    if (query) qp.set("q", query)
+    if (city) qp.set("city", city)
+    if (p > 1) qp.set("page", String(p))
+    const qs = qp.toString()
+    return qs ? `/explore?${qs}` : "/explore"
+  }
+
   return (
     <div className="bg-[#FDFBF7] min-h-screen py-8 sm:py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
@@ -172,9 +194,20 @@ export default async function ExplorePage({
               </div>
             ) : (
               <div className="space-y-4">
-                {allServices.map((service: any) => (
-                  <ServiceCard key={service.id} service={service} />
-                ))}
+                <div className="space-y-4">
+                  {paginatedServices.map((service: any) => (
+                    <ServiceCard key={service.id} service={service} />
+                  ))}
+                </div>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  itemName="service providers"
+                  createPageUrl={createPageUrl}
+                />
               </div>
             )}
           </div>

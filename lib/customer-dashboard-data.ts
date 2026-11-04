@@ -46,44 +46,21 @@ export async function getCustomerDashboardProps(initialTab: string = "dashboard"
       }
     })
   } catch (err) {
-    console.error("Database error in customer dashboard, using fallback:", err)
-    formattedBookings = [
-      {
-        id: "bk-sample-1",
-        serviceTitle: "Plumbing & Pipe Maintenance",
-        providerName: "Abel Tesfaye",
-        date: "May 10, 2026",
-        time: "10:00 AM",
-        status: "Upcoming",
-        image: "/avatars/abel.jpg",
-        price: "200 ETB/hr",
-      },
-      {
-        id: "bk-sample-2",
-        serviceTitle: "Deep Home Cleaning",
-        providerName: "Meron Hailu",
-        date: "Apr 25, 2026",
-        time: "2:00 PM",
-        status: "Completed",
-        image: "/avatars/meron.jpg",
-        price: "150 ETB/hr",
-      },
-      {
-        id: "bk-sample-3",
-        serviceTitle: "Private Math Tutoring",
-        providerName: "Solomon Kebede",
-        date: "Apr 18, 2026",
-        time: "4:00 PM",
-        status: "Completed",
-        image: "/avatars/solomon.jpg",
-        price: "300 ETB/hr",
-      },
-    ]
+    console.error("Database error in customer dashboard:", err)
+    formattedBookings = []
   }
 
+  const safeName =
+    session.user.name && session.user.name.trim() !== ""
+      ? session.user.name
+      : session.user.email
+      ? session.user.email.split("@")[0]
+      : "Customer"
+
   return {
-    userName: session.user.name || "Dawit Kebede",
-    userEmail: session.user.email,
+    userName: safeName,
+    userEmail: session.user.email || "",
+    userImage: session.user.image || null,
     bookings: formattedBookings,
     initialTab,
   }
