@@ -9,6 +9,9 @@ export interface PaginationProps {
   totalPages: number
   onPageChange?: (page: number) => void
   createPageUrl?: (page: number) => string
+  baseUrl?: string
+  queryParams?: Record<string, string | number | undefined | null>
+  urlPattern?: string
   totalItems?: number
   itemsPerPage?: number
   itemName?: string
@@ -20,6 +23,9 @@ export default function Pagination({
   totalPages,
   onPageChange,
   createPageUrl,
+  baseUrl,
+  queryParams,
+  urlPattern,
   totalItems,
   itemsPerPage,
   itemName = "results",
@@ -76,6 +82,31 @@ export default function Pagination({
     }
   }
 
+  const resolvePageUrl = (page: number): string | null => {
+    if (urlPattern) {
+      return urlPattern.replace("[page]", String(page))
+    }
+    if (baseUrl) {
+      const qp = new URLSearchParams()
+      if (queryParams) {
+        for (const [key, val] of Object.entries(queryParams)) {
+          if (val !== undefined && val !== null && String(val).trim() !== "") {
+            qp.set(key, String(val))
+          }
+        }
+      }
+      if (page > 1) {
+        qp.set("page", String(page))
+      }
+      const qs = qp.toString()
+      return qs ? `${baseUrl}?${qs}` : baseUrl
+    }
+    if (createPageUrl) {
+      return createPageUrl(page)
+    }
+    return null
+  }
+
   const renderButton = (
     page: number,
     label: React.ReactNode,
@@ -92,9 +123,10 @@ export default function Pagination({
 
     const baseClasses = `inline-flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-xs sm:text-sm font-semibold transition-all ${activeClasses} ${disabledClasses}`
 
-    if (createPageUrl && !disabled) {
+    const targetUrl = resolvePageUrl(page)
+    if (targetUrl && !disabled) {
       return (
-        <Link href={createPageUrl(page)} className={baseClasses}>
+        <Link href={targetUrl} className={baseClasses}>
           {label}
         </Link>
       )

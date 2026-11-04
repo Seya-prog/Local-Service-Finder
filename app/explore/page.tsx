@@ -18,7 +18,7 @@ export default async function ExplorePage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const params = await searchParams
+  const params = (await searchParams) || {}
   const category = typeof params.category === "string" ? params.category : undefined
   const query = typeof params.q === "string" ? params.q : undefined
   const city = typeof params.city === "string" ? params.city : undefined
@@ -34,21 +34,22 @@ export default async function ExplorePage({
     dbData = []
   }
 
-  const dbMappedServices = dbData.map((row) => {
+  const dbMappedServices = (dbData || []).map((row) => {
+    const s = row.service || {}
     const providerName = row.provider?.name || "Verified Provider"
-    const rawAvatar = row.provider?.image || row.service.image || null
+    const rawAvatar = row.provider?.image || s.image || null
     return {
-      id: row.service.id,
+      id: s.id || crypto.randomUUID(),
       name: providerName,
-      avatar: getProviderAvatar(providerName, row.service.category, rawAvatar),
-      title: row.service.title,
-      category: row.service.category,
-      description: row.service.description,
-      priceRange: `${row.service.price} ETB / ${row.service.priceUnit || "hr"}`,
-      location: `${row.service.location}, ${row.service.city}`,
-      verified: row.service.verified,
-      rating: row.service.rating || "5.0",
-      reviewCount: row.service.reviewCount || 0,
+      avatar: getProviderAvatar(providerName, s.category, rawAvatar),
+      title: s.title || `${s.category || "Local"} Service`,
+      category: s.category || "General",
+      description: s.description || "",
+      priceRange: `${s.price || 250} ETB / ${s.priceUnit || "hr"}`,
+      location: `${s.location || "Bole"}, ${s.city || "Addis Ababa"}`,
+      verified: Boolean(s.verified),
+      rating: s.rating || "5.0",
+      reviewCount: s.reviewCount || 0,
     }
   })
 
@@ -145,16 +146,6 @@ export default async function ExplorePage({
     currentPage * ITEMS_PER_PAGE
   )
 
-  const createPageUrl = (p: number) => {
-    const qp = new URLSearchParams()
-    if (category) qp.set("category", category)
-    if (query) qp.set("q", query)
-    if (city) qp.set("city", city)
-    if (p > 1) qp.set("page", String(p))
-    const qs = qp.toString()
-    return qs ? `/explore?${qs}` : "/explore"
-  }
-
   return (
     <div className="bg-[#FDFBF7] min-h-screen py-8 sm:py-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
@@ -206,7 +197,8 @@ export default async function ExplorePage({
                   totalItems={totalItems}
                   itemsPerPage={ITEMS_PER_PAGE}
                   itemName="service providers"
-                  createPageUrl={createPageUrl}
+                  baseUrl="/explore"
+                  queryParams={{ category, q: query, city }}
                 />
               </div>
             )}
