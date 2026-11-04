@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession, signOut } from "@/lib/auth-client"
 import { ChevronDown, Menu, X } from "lucide-react"
 import Logo from "./Logo"
@@ -14,6 +14,16 @@ export default function Navbar() {
 
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    handleScroll()
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -46,8 +56,18 @@ export default function Navbar() {
     }`
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-100/80 bg-[#FDFBF7]/95 backdrop-blur-md">
-      <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+    <nav
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ease-in-out ${
+        scrolled
+          ? "border-b border-gray-200/60 bg-[#FDFBF7]/85 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
+          : "border-b border-gray-100/60 bg-[#FDFBF7]"
+      }`}
+    >
+      <div
+        className={`mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-in-out ${
+          scrolled ? "h-14 sm:h-16" : "h-20"
+        }`}
+      >
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2.5"
