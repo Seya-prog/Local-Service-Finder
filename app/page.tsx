@@ -11,6 +11,7 @@ import {
   Wrench,
   Zap,
   GraduationCap,
+  Scissors,
   Camera,
   SprayCanIcon as Spray
 } from "lucide-react"
@@ -58,8 +59,8 @@ export default function HomePage() {
                     <input
                       name="city"
                       type="text"
-                      placeholder="e.g. New York"
-                      defaultValue="New York"
+                      placeholder="e.g. Bole, Addis Ababa"
+                      defaultValue="Addis Ababa"
                       className="w-full bg-transparent text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none"
                     />
                   </div>
@@ -79,7 +80,6 @@ export default function HomePage() {
                       name="q"
                       type="text"
                       placeholder="e.g. plumber, tutor, cleaner"
-                      defaultValue="Babysitter"
                       className="w-full bg-transparent text-xs text-gray-800 placeholder:text-gray-400 focus:outline-none"
                     />
                   </div>
@@ -168,7 +168,7 @@ export default function HomePage() {
             {[
               {
                 label: "Home Cleaning",
-                category: "Cleaning / Cooker / Housekeeper",
+                category: "Cleaning",
                 bg: "bg-orange-100 text-orange-600",
                 icon: Spray,
               },
@@ -179,16 +179,16 @@ export default function HomePage() {
                 icon: Wrench,
               },
               {
-                label: "Electrical Services",
-                category: "Handy men",
-                bg: "bg-amber-100 text-amber-600",
-                icon: Zap,
-              },
-              {
                 label: "Babysitting",
-                category: "Nanny / Babysitter",
+                category: "Nanny",
                 bg: "bg-pink-100 text-pink-600",
                 icon: Sparkles,
+              },
+              {
+                label: "Electrical & Tech",
+                category: "Tech",
+                bg: "bg-amber-100 text-amber-600",
+                icon: Zap,
               },
               {
                 label: "Tutoring",
@@ -197,10 +197,10 @@ export default function HomePage() {
                 icon: GraduationCap,
               },
               {
-                label: "Photography",
-                category: "Tech",
-                bg: "bg-emerald-100 text-emerald-600",
-                icon: Camera,
+                label: "Beauty & Hair",
+                category: "Beauty",
+                bg: "bg-rose-100 text-rose-600",
+                icon: Scissors,
               },
             ].map((cat) => {
               const IconComponent = cat.icon
@@ -248,44 +248,44 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                id: "svc-001",
-                name: "Sarah Mitchell",
+                id: "svc-004",
+                name: "Meron Hailu",
                 category: "Home Cleaning",
-                avatar: "/avatars/sarah.jpg",
+                avatar: "/avatars/meron.jpg",
                 rating: 4.9,
-                reviews: 124,
-                location: "New York, NY • 5 yrs experience",
-                price: "$25/hr",
+                reviews: 3,
+                location: "Bole, Addis Ababa • 5 yrs experience",
+                price: "200 ETB/hr",
               },
               {
                 id: "svc-003",
-                name: "Mike Johnson",
+                name: "Abel Tesfaye",
                 category: "Plumbing",
-                avatar: "/avatars/mike.jpg",
-                rating: 4.8,
-                reviews: 98,
-                location: "Brooklyn, NY • 8 yrs experience",
-                price: "$40/hr",
+                avatar: "/avatars/abel.jpg",
+                rating: 4.9,
+                reviews: 3,
+                location: "Kazanchis, Addis Ababa • 8 yrs experience",
+                price: "250 ETB/hr",
               },
               {
                 id: "svc-005",
-                name: "Emma Davis",
+                name: "Solomon Kebede",
                 category: "Tutoring",
-                avatar: "/avatars/emma.jpg",
+                avatar: "/avatars/solomon.jpg",
                 rating: 4.9,
-                reviews: 156,
-                location: "Queens, NY • 6 yrs experience",
-                price: "$30/hr",
+                reviews: 3,
+                location: "Piassa, Addis Ababa • 10 yrs experience",
+                price: "300 ETB/hr",
               },
               {
-                id: "svc-007",
-                name: "Daniel Carter",
-                category: "Photography",
-                avatar: "/avatars/daniel.jpg",
-                rating: 4.8,
-                reviews: 87,
-                location: "Manhattan, NY • 4 yrs experience",
-                price: "$50/hr",
+                id: "svc-008",
+                name: "Tigist Worku",
+                category: "Food & Catering",
+                avatar: "/avatars/tigist.jpg",
+                rating: 5.0,
+                reviews: 3,
+                location: "CMC, Addis Ababa • 12 yrs experience",
+                price: "500 ETB/event",
               },
             ].map((p) => (
               <div
@@ -293,23 +293,27 @@ export default function HomePage() {
                 className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-xs hover:shadow-md hover:border-orange-200 transition-all flex flex-col"
               >
                 {/* Image Container with Top Rated Badge */}
-                <div className="relative h-44 w-full overflow-hidden rounded-xl bg-gray-100 mb-3.5">
-                  <Image
-                    src={p.avatar}
-                    alt={p.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 25vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <span className="absolute top-2.5 right-2.5 rounded-full bg-[#FF6B00] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
-                    Top Rated
-                  </span>
-                </div>
+                <Link href={`/explore/${p.id}`} className="block">
+                  <div className="relative h-44 w-full overflow-hidden rounded-xl bg-gray-100 mb-3.5">
+                    <Image
+                      src={p.avatar}
+                      alt={p.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 25vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <span className="absolute top-2.5 right-2.5 rounded-full bg-[#FF6B00] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                      Top Rated
+                    </span>
+                  </div>
+                </Link>
 
                 {/* Details */}
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-gray-900 text-base">{p.name}</h3>
+                    <Link href={`/explore/${p.id}`} className="block group/title">
+                      <h3 className="font-bold text-gray-900 text-base group-hover/title:text-[#FF6B00] transition-colors">{p.name}</h3>
+                    </Link>
                     <p className="text-xs text-gray-400 font-medium">{p.category}</p>
 
                     <div className="mt-2 flex items-center gap-1.5 text-xs">
@@ -327,7 +331,7 @@ export default function HomePage() {
                   <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-sm font-extrabold text-gray-900">{p.price}</span>
                     <Link
-                      href="/explore"
+                      href={`/explore/${p.id}`}
                       className="rounded-lg border border-orange-300 px-4 py-1.5 text-xs font-semibold text-[#FF6B00] hover:bg-orange-50 transition-colors"
                     >
                       View Profile
@@ -355,7 +359,7 @@ export default function HomePage() {
               </p>
             </div>
             <Link
-              href="/explore"
+              href="/about"
               className="inline-flex items-center gap-1 text-sm font-semibold text-[#FF6B00] hover:text-[#ea580c] transition-colors"
             >
               Learn more <ArrowRight className="h-4 w-4" />
@@ -424,7 +428,7 @@ export default function HomePage() {
               </p>
             </div>
             <Link
-              href="/explore"
+              href="/reviews"
               className="inline-flex items-center gap-1 text-sm font-semibold text-[#FF6B00] hover:text-[#ea580c] transition-colors"
             >
               View all reviews <ArrowRight className="h-4 w-4" />
@@ -434,25 +438,25 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                name: "Jessica L.",
-                location: "New York, NY",
-                avatar: "/avatars/jessica.jpg",
+                name: "Hiwot G.",
+                location: "Bole, Addis Ababa",
+                avatar: "/avatars/hana.jpg",
                 quote:
-                  "The plumber arrived on time and did an excellent job. Very professional and friendly!",
+                  "The plumbing repair at our apartment in Bole was completed cleanly and quickly. Very polite and professional!",
               },
               {
-                name: "Michael T.",
-                location: "Brooklyn, NY",
-                avatar: "/avatars/michael.jpg",
+                name: "Dawit H.",
+                location: "Kazanchis, Addis Ababa",
+                avatar: "/avatars/yonas.jpg",
                 quote:
-                  "I found a great tutor for my daughter. The whole process was easy and smooth.",
+                  "Found a wonderful math tutor for my son. The entire booking process was smooth and the tutor was very dedicated.",
               },
               {
-                name: "Emily R.",
-                location: "Queens, NY",
-                avatar: "/avatars/emily.jpg",
+                name: "Bethlehem T.",
+                location: "Sarbet, Addis Ababa",
+                avatar: "/avatars/meron.jpg",
                 quote:
-                  "Amazing photography service! The photos turned out even better than I expected.",
+                  "Exceptional home cleaning service! Arrived right on time and left everything fresh, spotless, and organized.",
               },
             ].map((t) => (
               <div
