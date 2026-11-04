@@ -1,4 +1,5 @@
-// Placeholder — Phase 2 loading skeleton
+import { DashboardLoadingSkeleton } from "@/components/ui/LoadingSpinner"
+
 export default function CustomerDashboardLoading() {
-  return <div className="animate-pulse p-8">Loading customer dashboard...</div>
+  return <DashboardLoadingSkeleton />
 }

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useCallback } from "react"
-import { Search, Navigation, ChevronUp, ChevronDown } from "lucide-react"
+import { Search, Navigation, ChevronUp, ChevronDown, RotateCcw } from "lucide-react"
 
 interface FilterBarProps {
   currentCategory?: string
@@ -19,15 +19,15 @@ export function SearchPillBar({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [city, setCity] = useState(currentCity || "New York")
-  const [query, setQuery] = useState(currentQuery || "Babysitter")
+  const [city, setCity] = useState(currentCity || "Addis Ababa")
+  const [query, setQuery] = useState(currentQuery || "")
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const params = new URLSearchParams(searchParams.toString())
-    if (city) params.set("city", city)
+    if (city.trim()) params.set("city", city.trim())
     else params.delete("city")
-    if (query) params.set("q", query)
+    if (query.trim()) params.set("q", query.trim())
     else params.delete("q")
     router.push(`/explore?${params.toString()}`)
   }
@@ -38,12 +38,12 @@ export function SearchPillBar({
       className="flex flex-col sm:flex-row items-center rounded-2xl bg-white p-2.5 shadow-[0_8px_25px_rgba(0,0,0,0.04)] border border-gray-100 gap-2 max-w-4xl mx-auto"
     >
       <div className="relative flex items-center flex-1 w-full sm:w-auto px-3 py-1">
-        <Navigation className="h-4 w-4 text-gray-400 rotate-45 shrink-0 mr-2.5" />
+        <Navigation className="h-4 w-4 text-orange-500 rotate-45 shrink-0 mr-2.5" />
         <input
           type="text"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          placeholder="New york"
+          placeholder="Addis Ababa (Bole, Kazanchis...)"
           className="w-full bg-transparent text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none"
         />
       </div>
@@ -56,7 +56,7 @@ export function SearchPillBar({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Babysitter"
+          placeholder="Search cleaner, plumber, tutor, beauty..."
           className="w-full bg-transparent text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none"
         />
       </div>
@@ -76,40 +76,71 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
   const searchParams = useSearchParams()
 
   const [householdOpen, setHouseholdOpen] = useState(true)
+  const [beautyOpen, setBeautyOpen] = useState(true)
+  const [techOpen, setTechOpen] = useState(true)
   const [foodOpen, setFoodOpen] = useState(false)
-  const [housingOpen, setHousingOpen] = useState(false)
   const [educationOpen, setEducationOpen] = useState(false)
   const [availabilityOpen, setAvailabilityOpen] = useState(false)
+
+  const isCatChecked = useCallback(
+    (cat: string) => {
+      if (!currentCategory) return false
+      const cur = currentCategory.toLowerCase().trim()
+      const target = cat.toLowerCase().trim()
+      if (cur === target) return true
+      if (cur.includes(target) || target.includes(cur)) return true
+      if (target === "cleaning" && cur.includes("clean")) return true
+      if (target === "nanny" && cur.includes("nanny")) return true
+      if (target === "handy men" && (cur.includes("handy") || cur.includes("plumb"))) return true
+      return false
+    },
+    [currentCategory]
+  )
 
   const updateCategory = useCallback(
     (cat: string) => {
       const params = new URLSearchParams(searchParams.toString())
-      if (currentCategory === cat) {
+      if (isCatChecked(cat)) {
         params.delete("category")
       } else {
         params.set("category", cat)
       }
       router.push(`/explore?${params.toString()}`)
     },
-    [router, searchParams, currentCategory]
+    [router, searchParams, isCatChecked]
   )
 
+  const clearAllFilters = () => {
+    router.push("/explore")
+  }
+
   const householdItems = [
-    { id: "cleaner", label: "Cleaning / Cooker / Housekeeper", cat: "Cleaning / Cooker / Housekeeper" },
-    { id: "nanny", label: "Nanny / Babysitter", cat: "Nanny / Babysitter" },
-    { id: "handyman", label: "Handy men", cat: "Handy men" },
-    { id: "guday", label: "Guday Asfesami", cat: "Guday Adesani" },
+    { id: "cleaner", label: "Home & Office Cleaning", cat: "Cleaning / Cooker / Housekeeper" },
+    { id: "nanny", label: "Nanny & Babysitting", cat: "Nanny / Babysitter" },
+    { id: "handyman", label: "Plumbing & Handyman", cat: "Handy men" },
   ]
+
+  const hasActiveFilters = Boolean(currentCategory || searchParams.get("q") || searchParams.get("city"))
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold text-gray-900 pb-4 border-b border-gray-100">
-        Filter
-      </h2>
+      <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+        <h2 className="text-xl font-bold text-gray-900">Filter</h2>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#FF6B00] hover:text-orange-700 transition"
+          >
+            <RotateCcw className="h-3 w-3" />
+            <span>Reset</span>
+          </button>
+        )}
+      </div>
 
       {/* Categories */}
       <div className="pt-4">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Categories</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Service Categories</h3>
 
         {/* Household Accordion */}
         <div className="border-b border-gray-100 pb-3">
@@ -118,7 +149,7 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
             onClick={() => setHouseholdOpen(!householdOpen)}
             className="flex w-full items-center justify-between py-2 text-sm font-semibold text-gray-800 hover:text-[#FF6B00]"
           >
-            <span>Household</span>
+            <span>Household & Care</span>
             {householdOpen ? (
               <ChevronUp className="h-4 w-4 text-gray-500" />
             ) : (
@@ -129,7 +160,7 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
           {householdOpen && (
             <div className="mt-2 space-y-2.5 pl-1">
               {householdItems.map((item) => {
-                const isChecked = currentCategory === item.cat
+                const isChecked = isCatChecked(item.cat)
                 return (
                   <label
                     key={item.id}
@@ -149,6 +180,64 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
           )}
         </div>
 
+        {/* Beauty */}
+        <div className="border-b border-gray-100 py-3">
+          <button
+            type="button"
+            onClick={() => setBeautyOpen(!beautyOpen)}
+            className="flex w-full items-center justify-between text-sm font-semibold text-gray-800 hover:text-[#FF6B00]"
+          >
+            <span>Beauty & Hair</span>
+            {beautyOpen ? (
+              <ChevronUp className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            )}
+          </button>
+          {beautyOpen && (
+            <div className="mt-2 space-y-2.5 pl-1">
+              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={isCatChecked("Beauty")}
+                  onChange={() => updateCategory("Beauty")}
+                  className="h-4 w-4 rounded border-gray-300 text-[#FF6B00] accent-[#FF6B00]"
+                />
+                <span>Hair Styling & Beauty Care</span>
+              </label>
+            </div>
+          )}
+        </div>
+
+        {/* Tech & Electrical */}
+        <div className="border-b border-gray-100 py-3">
+          <button
+            type="button"
+            onClick={() => setTechOpen(!techOpen)}
+            className="flex w-full items-center justify-between text-sm font-semibold text-gray-800 hover:text-[#FF6B00]"
+          >
+            <span>Tech & Electrical</span>
+            {techOpen ? (
+              <ChevronUp className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            )}
+          </button>
+          {techOpen && (
+            <div className="mt-2 space-y-2.5 pl-1">
+              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={isCatChecked("Tech")}
+                  onChange={() => updateCategory("Tech")}
+                  className="h-4 w-4 rounded border-gray-300 text-[#FF6B00] accent-[#FF6B00]"
+                />
+                <span>Electrical & IT Repair</span>
+              </label>
+            </div>
+          )}
+        </div>
+
         {/* Food */}
         <div className="border-b border-gray-100 py-3">
           <button
@@ -156,7 +245,7 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
             onClick={() => setFoodOpen(!foodOpen)}
             className="flex w-full items-center justify-between text-sm font-semibold text-gray-800 hover:text-[#FF6B00]"
           >
-            <span>Food</span>
+            <span>Food & Catering</span>
             {foodOpen ? (
               <ChevronUp className="h-4 w-4 text-gray-500" />
             ) : (
@@ -165,43 +254,14 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
           </button>
           {foodOpen && (
             <div className="mt-2 space-y-2.5 pl-1">
-              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:text-gray-900">
                 <input
                   type="checkbox"
-                  checked={currentCategory === "Food"}
+                  checked={isCatChecked("Food")}
                   onChange={() => updateCategory("Food")}
                   className="h-4 w-4 rounded border-gray-300 text-[#FF6B00] accent-[#FF6B00]"
                 />
-                <span>Catering & Cooking</span>
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Housing */}
-        <div className="border-b border-gray-100 py-3">
-          <button
-            type="button"
-            onClick={() => setHousingOpen(!housingOpen)}
-            className="flex w-full items-center justify-between text-sm font-semibold text-gray-800 hover:text-[#FF6B00]"
-          >
-            <span>Housing</span>
-            {housingOpen ? (
-              <ChevronUp className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
-            )}
-          </button>
-          {housingOpen && (
-            <div className="mt-2 space-y-2.5 pl-1">
-              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={currentCategory === "Housing"}
-                  onChange={() => updateCategory("Housing")}
-                  className="h-4 w-4 rounded border-gray-300 text-[#FF6B00] accent-[#FF6B00]"
-                />
-                <span>Housing & Repairs</span>
+                <span>Traditional Cooking & Catering</span>
               </label>
             </div>
           )}
@@ -223,14 +283,14 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
           </button>
           {educationOpen && (
             <div className="mt-2 space-y-2.5 pl-1">
-              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:text-gray-900">
                 <input
                   type="checkbox"
-                  checked={currentCategory === "Education"}
+                  checked={isCatChecked("Education")}
                   onChange={() => updateCategory("Education")}
                   className="h-4 w-4 rounded border-gray-300 text-[#FF6B00] accent-[#FF6B00]"
                 />
-                <span>Tutoring & Lessons</span>
+                <span>Private Tutoring & Lessons</span>
               </label>
             </div>
           )}
@@ -252,13 +312,13 @@ export function FilterSidebar({ currentCategory }: { currentCategory?: string })
           </button>
           {availabilityOpen && (
             <div className="mt-2 space-y-2.5 pl-1">
-              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:text-gray-900">
                 <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-[#FF6B00] accent-[#FF6B00]" />
-                <span>Available Today</span>
+                <span>Available Today in Addis Ababa</span>
               </label>
-              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:text-gray-900">
                 <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-[#FF6B00] accent-[#FF6B00]" />
-                <span>Weekends</span>
+                <span>Weekends Available</span>
               </label>
             </div>
           )}

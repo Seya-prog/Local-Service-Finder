@@ -5,41 +5,124 @@ import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { services as staticServices } from "@/lib/data"
+import ServiceDetailClient, { ServiceDetailData } from "@/components/services/ServiceDetailClient"
+import { getProviderAvatar } from "@/lib/avatar-resolver"
 
-export default async function ServiceDetails({ params }: { params: Promise<{ id: string }> }) {
-  const p = await params;
-  const session = await auth.api.getSession({ headers: await headers() })
-  
-  let service: Record<string, string | number | boolean | null> | null = null;
-  
-  let isDummy = false;
-
-  const data = await db
-    .select({ service: servicesTable, provider: user })
-    .from(servicesTable)
-    .leftJoin(user, eq(servicesTable.providerId, user.id))
-    .where(eq(servicesTable.id, p.id))
-    .limit(1);
-
-  if (data.length > 0) {
-    service = data[0].service;
-    
-  } else {
-    const dummy = staticServices.find((s) => s.id === p.id);
-    if (!dummy) return <div className="py-20 text-center text-xl font-bold text-gray-600">Service not found.</div>;
-    
-    service = { ...dummy, price: "25", priceUnit: "hr", title: dummy.category + " Services" };
-    
-    isDummy = true;
+export default async function ServiceDetails({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const p = await params
+  let session = null
+  try {
+    session = await auth.api.getSession({ headers: await headers() })
+  } catch (err) {
+    console.error("Auth session check error:", err)
+    session = null
   }
 
-  const safeServiceId = String(service.id);
-  const safeProviderId = String(service.providerId || "dummy");
-  const safePrice = String(service.price || "0");
+  let dbData: any[] = []
+  try {
+    dbData = await db
+      .select({ service: servicesTable, provider: user })
+      .from(servicesTable)
+      .leftJoin(user, eq(servicesTable.providerId, user.id))
+      .where(eq(servicesTable.id, p.id))
+      .limit(1)
+  } catch (err) {
+    console.error("Database query error, falling back to static services:", err)
+    dbData = []
+  }
+
+  let serviceData: ServiceDetailData | null = null
+
+  if (dbData.length > 0) {
+    const s = dbData[0].service
+    const prov = dbData[0].provider
+    const providerName = prov?.name || "Verified Provider"
+    const resolvedAvatar = getProviderAvatar(providerName, s.category, prov?.image || s.image)
+    const mainImg = resolvedAvatar || "/avatars/abel.jpg"
+
+    serviceData = {
+      id: s.id,
+      providerId: s.providerId,
+      title: s.title,
+      category: s.category,
+      description: s.description,
+      price: s.price,
+      priceUnit: s.priceUnit,
+      location: s.location,
+      city: s.city,
+      providerName,
+      providerAvatar: resolvedAvatar,
+      rating: s.rating || "4.9",
+      reviewCount: s.reviewCount || 3,
+      experience: "5 yrs experience",
+      servicesIncluded: [
+        "General cleaning",
+        "Deep cleaning",
+        "Move-in / Move-out cleaning",
+        "Eco-friendly products",
+      ],
+      serviceAreas: [`${s.city || "Bole"}, Addis Ababa`, "Kazanchis, Addis Ababa", "Sarbet, Addis Ababa"],
+      galleryImages: [mainImg],
+      isDummy: false,
+    }
+  } else {
+    const dummy = staticServices.find((s) => s.id === p.id)
+    if (!dummy) {
+      return (
+        <div className="py-20 text-center text-xl font-bold text-gray-600">
+          Service not found.
+        </div>
+      )
+    }
+
+    const defaultIncluded =
+      dummy.services && dummy.services.length > 0
+        ? dummy.services
+        : [
+            "General cleaning",
+            "Deep cleaning",
+            "Move-in / Move-out cleaning",
+            "Eco-friendly products",
+          ]
+
+    const singlePhoto = dummy.avatar || "/images/hero-cleaner.jpg"
+
+    serviceData = {
+      id: dummy.id,
+      providerId: dummy.createdBy || "dummy-provider",
+      title: `${dummy.category} Services`,
+      category: dummy.category,
+      description:
+        dummy.description ||
+        "I provide reliable and professional services for your home. I pay attention to detail and ensure thorough quality work. Your satisfaction is my priority.",
+      price: "250",
+      priceUnit: "hr",
+      location: dummy.location,
+      city: dummy.city || "Addis Ababa",
+      providerName: dummy.name,
+      providerAvatar: dummy.avatar || "/avatars/meron.jpg",
+      rating: dummy.rating || 4.9,
+      reviewCount: dummy.reviewCount || 124,
+      experience: dummy.experience || "5 yrs experience",
+      servicesIncluded: defaultIncluded,
+      serviceAreas: [`${dummy.city || "Bole"}, Addis Ababa`, "Kazanchis, Addis Ababa", "Sarbet, Addis Ababa"],
+      galleryImages: [singlePhoto],
+      isDummy: true,
+    }
+  }
+
+  const safeServiceId = serviceData.id
+  const safeProviderId = serviceData.providerId
+  const safePrice = serviceData.price
+  const isDemo = serviceData.isDummy
 
   async function createBooking(formData: FormData) {
     "use server"
-    if (isDummy) return; 
+    if (isDemo) return
     const currentSession = await auth.api.getSession({ headers: await headers() })
     if (!currentSession) redirect("/sign-in")
 
@@ -60,58 +143,10 @@ export default async function ServiceDetails({ params }: { params: Promise<{ id:
   }
 
   return (
-    <div className="bg-[#FDFBF7] min-h-screen py-12 px-6">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex justify-between items-start border-b border-gray-100 pb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{service.title}</h1>
-            <p className="text-orange-600 font-semibold mt-2">{service.category}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Rate</p>
-            <p className="font-bold text-2xl text-gray-900">${service.price} <span className="text-sm font-normal text-gray-500">/ {service.priceUnit}</span></p>
-          </div>
-        </div>
-        
-        <div className="mt-8">
-          <h3 className="text-lg font-bold mb-2 text-gray-900">About this service</h3>
-          <p className="text-gray-700 leading-relaxed">{service.description}</p>
-        </div>
-
-        <div className="mt-10 bg-gray-50 p-6 rounded-xl border border-gray-200">
-          <h3 className="text-lg font-bold mb-4 text-gray-900">Book an Appointment</h3>
-          {isDummy ? (
-            <div className="text-center py-4 bg-orange-50 text-orange-800 rounded-lg font-medium border border-orange-200">
-              This is a static demo profile. Booking is disabled.
-            </div>
-          ) : session ? (
-            <form action={createBooking} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                  <input type="date" name="date" required className="w-full rounded-lg border border-gray-300 p-2.5" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                  <select name="time" required className="w-full rounded-lg border border-gray-300 p-2.5">
-                    <option value="Morning (9AM - 12PM)">Morning (9AM - 12PM)</option>
-                    <option value="Afternoon (1PM - 4PM)">Afternoon (1PM - 4PM)</option>
-                    <option value="Evening (5PM - 8PM)">Evening (5PM - 8PM)</option>
-                  </select>
-                </div>
-              </div>
-              <button type="submit" className="w-full bg-[#FF6B00] text-white py-3 rounded-xl font-bold text-lg hover:bg-orange-600 transition-colors shadow-sm">
-                Confirm Booking
-              </button>
-            </form>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-gray-600 mb-3">Please sign in to book this service.</p>
-              <a href="/sign-in" className="bg-[#FF6B00] text-white px-6 py-2 rounded-lg font-semibold hover:bg-orange-600 inline-block">Sign In to Book</a>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    <ServiceDetailClient
+      service={JSON.parse(JSON.stringify(serviceData))}
+      isLoggedIn={Boolean(session)}
+      createBookingAction={createBooking}
+    />
   )
 }
