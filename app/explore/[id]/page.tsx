@@ -10,8 +10,7 @@ export default async function ServiceDetails({ params }: { params: Promise<{ id:
   const p = await params;
   const session = await auth.api.getSession({ headers: await headers() })
   
-  let service: Record<string, string | number | boolean | null> | null = null;
-  
+  let service: Record<string, any> | null = null;
   let isDummy = false;
 
   const data = await db
@@ -23,14 +22,16 @@ export default async function ServiceDetails({ params }: { params: Promise<{ id:
 
   if (data.length > 0) {
     service = data[0].service;
-    
   } else {
     const dummy = staticServices.find((s) => s.id === p.id);
     if (!dummy) return <div className="py-20 text-center text-xl font-bold text-gray-600">Service not found.</div>;
     
     service = { ...dummy, price: "25", priceUnit: "hr", title: dummy.category + " Services" };
-    
     isDummy = true;
+  }
+
+  if (!service) {
+    return <div className="py-20 text-center text-xl font-bold text-gray-600">Service not found.</div>;
   }
 
   const safeServiceId = String(service.id);

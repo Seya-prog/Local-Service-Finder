@@ -5,8 +5,7 @@ import { eq } from "drizzle-orm";
 import CustomerEmptyState from "@/components/dashboard/CustomerEmptyState";
 
 export default async function CustomerDashboardPage() {
-  // 1. Secure the page
-  const session = await verifySession();
+  // 1. Secure th  await verifySession();
   const userId = session.user.id;
 
   // 2. Fetch bookings matching this customer ID
